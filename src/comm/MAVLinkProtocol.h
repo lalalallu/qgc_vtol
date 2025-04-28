@@ -29,6 +29,7 @@ class MultiVehicleManager;
 class QGCApplication;
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkProtocolLog)
+Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
 /**
  * @brief MAVLink micro air vehicle protocol reference implementation.

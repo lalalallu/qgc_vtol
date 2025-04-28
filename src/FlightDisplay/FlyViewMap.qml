@@ -287,6 +287,19 @@ FlightMap {
             z:              QGroundControl.zOrderVehicles
         }
     }
+
+    // Add the TargetImage to the map
+    MapItemView {
+        model: QGroundControl.multiVehicleManager.vehicles
+        delegate: TargetImage {
+            vehicle:        object
+            coordinate:     QtPositioning.coordinate(QGroundControl.settingsManager.appSettings.firePointLat.rawValue, QGroundControl.settingsManager.appSettings.firePointLon.rawValue)
+            map:            editorMap
+            size:           pipMode ? ScreenTools.defaultFontPixelHeight : ScreenTools.defaultFontPixelHeight * 3
+            z:              QGroundControl.zOrderVehicles
+        }
+    }
+
     // Add distance sensor view
     MapItemView{
         model: QGroundControl.multiVehicleManager.vehicles

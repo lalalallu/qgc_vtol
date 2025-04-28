@@ -2294,6 +2294,119 @@ void MissionController::applyDefaultMissionAltitude(void)
         item->applyNewAltitude(defaultAltitude);
     }
 }
+void MissionController::searchFireWaypoint()
+{
+    //清除投弹任务标志
+    _managerVehicle->sendFlagOfAirDrop(false,false);
+    
+    VisualMissionItem *item = _visualItems->value<VisualMissionItem *>(2);
+
+    // qCWarning(MissionControllerLog) << "VisualMissionItem* item" << item->coordinate();
+    qgcApp()->toolbox()->settingsManager()->appSettings()->firePointLat()->setRawValue(item->coordinate().latitude());
+    qgcApp()->toolbox()->settingsManager()->appSettings()->firePointLon()->setRawValue(item->coordinate().longitude());
+    qgcApp()->toolbox()->settingsManager()->appSettings()->firePointAlt()->setRawValue(0.0);
+    qgcApp()->toolbox()->settingsManager()->appSettings()->windAzimuth()->setRawValue(90);
+    float d = 300; // 点之间距离300（米）
+    float _targetPointLat = qgcApp()->toolbox()->settingsManager()->appSettings()->firePointLat()->rawValue().toDouble();
+    float _targetPointLon = qgcApp()->toolbox()->settingsManager()->appSettings()->firePointLon()->rawValue().toDouble();
+    // float _targetPointAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->firePointAlt()->rawValue().toDouble();
+    //float _targetPointAzimuth = qgcApp()->toolbox()->settingsManager()->appSettings()->windAzimuth()->rawValue().toDouble();
+
+    //发送目标点
+    // _managerVehicle->sendFirePointMsg();
+
+    // QGeoCoordinate told = _takeoffMissionItem->coordinate(); // T点
+    QGeoCoordinate told = _managerVehicle->coordinate();                   // 飞机坐标点
+    QGeoCoordinate old = QGeoCoordinate(_targetPointLat, _targetPointLon); // X点 test(-35.3587723, 149.1652374)
+    qCWarning(MissionControllerLog) << "searchFireWaypoint()::takeoffpoint" << told;
+
+    // 插入 X点
+    //增加loiter航点，半径70,5圈
+    SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(_insertSimpleMissionItemWorker(old, MAV_CMD_NAV_LOITER_TURNS, visualItems()->count(), false));
+    simpleItem->missionItem().setParam1(5.0);
+    simpleItem->missionItem().setParam3(70.0);
+    qCWarning(MissionControllerLog) << "searchFireWaypoint()::firepoint" << old;
+    //清除原始航点
+    removeVisualItem(2);
+
+    // 计算从 T到 X的方向角
+    float a = told.azimuthTo(old); // 使用 QGeoCoordinate 的 azimuthTo 方法 与takeoff点成一条直线
+    // float a = _targetPointAzimuth;
+    qCWarning(MissionControllerLog) << "searchFireWaypoint()::azimuth of T to firepoint" << a;
+
+    // 计算 Y点的坐标
+    QGeoCoordinate newCoord = old.atDistanceAndAzimuth(d, a); // 使用 QGeoCoordinate 的 atDistanceAndAzimuth 方法
+    // 插入 Y点
+    insertSimpleMissionItem(newCoord, visualItems()->count());
+    qCWarning(MissionControllerLog) << "searchFireWaypoint()::endpoint" << newCoord;
+}
+
+
+void MissionController::insertMyWaypoint()
+{
+    float d = 300; // 点之间距离300（米）
+    float _targetPointLat = qgcApp()->toolbox()->settingsManager()->appSettings()->firePointLat()->rawValue().toDouble();
+    float _targetPointLon = qgcApp()->toolbox()->settingsManager()->appSettings()->firePointLon()->rawValue().toDouble();
+    // float _targetPointAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->firePointAlt()->rawValue().toDouble();
+    float _targetPointAzimuth = qgcApp()->toolbox()->settingsManager()->appSettings()->windAzimuth()->rawValue().toDouble();
+
+    // QGeoCoordinate told = _takeoffMissionItem->coordinate(); 
+    // T点
+    _takeoffMissionItem->altitude()->setRawValue(0);
+    // QGeoCoordinate told = _managerVehicle->coordinate();                   // 飞机坐标点
+    QGeoCoordinate told = plannedHomePosition();                            //home点坐标（takeoff）
+    // insertTakeoffItem(plannedHomePosition(), 1);
+
+    QGeoCoordinate old = QGeoCoordinate(_targetPointLat, _targetPointLon); // X点 test(-35.3587723, 149.1652374)
+    qCWarning(MissionControllerLog) << "insertMyWaypoint()::takeoffpoint" << told;
+    // 插入 X点
+    insertSimpleMissionItem(old, visualItems()->count());
+    qCWarning(MissionControllerLog) << "insertMyWaypoint()::firepoint" << old;
+
+    // 计算从 T到 X的方向角
+    // float a = told.azimuthTo(old); // 使用 QGeoCoordinate 的 azimuthTo 方法
+    float a = _targetPointAzimuth;
+    qCWarning(MissionControllerLog) << "insertMyWaypoint()::_targetPointAzimuth(winddir)" << a;
+
+    // 计算 z点的坐标
+    QGeoCoordinate newbeforeCoord = old.atDistanceAndAzimuth(400, a + 180);//距离着火点400米  2号点
+
+    QGeoCoordinate newbeforeCoord2 = old.atDistanceAndAzimuth(300, a + 180);//距离着火点300米 3号点
+    // 插入 z点
+    insertSimpleMissionItem(newbeforeCoord, visualItems()->count() - 1);
+    insertSimpleMissionItem(newbeforeCoord2, visualItems()->count() - 1);
+    qCWarning(MissionControllerLog) << "insertMyWaypoint()::entrypoint" << newbeforeCoord;
+
+    // 计算 Y点的坐标
+    QGeoCoordinate newCoord = old.atDistanceAndAzimuth(d / 2, a); // 使用 QGeoCoordinate 的 atDistanceAndAzimuth 方法
+    // 插入 Y点
+    insertSimpleMissionItem(newCoord, visualItems()->count());
+    qCWarning(MissionControllerLog) << "insertMyWaypoint()::endpoint" << newCoord;
+
+    //发送投弹任务标志
+    _managerVehicle->sendFlagOfAirDrop(true,false);
+}
+
+void MissionController::sendFireWaypoint()
+{
+    //发送目标点
+    _managerVehicle->sendFirePointMsg();
+}
+
+void MissionController::openAairDrop(bool isOpen)
+{
+    if (isOpen)
+    {
+        //打开投弹仓
+        _managerVehicle->sendFlagOfAirDrop(false,true);
+    }
+    else 
+    {
+        //关闭投弹仓
+        _managerVehicle->sendFlagOfAirDrop(false,false);
+    }
+    
+}
 
 void MissionController::_progressPctChanged(double progressPct)
 {

@@ -68,6 +68,11 @@ public:
     DEFINE_SETTINGFACT(forwardMavlinkHostName)
     DEFINE_SETTINGFACT(forwardMavlinkAPMSupportHostName)
 
+    //目标点经纬高与航向角
+    DEFINE_SETTINGFACT(firePointLat)
+    DEFINE_SETTINGFACT(firePointLon)
+    DEFINE_SETTINGFACT(firePointAlt)
+    DEFINE_SETTINGFACT(windAzimuth)
 
     // Although this is a global setting it only affects ArduPilot vehicle since PX4 automatically starts the stream from the vehicle side
     DEFINE_SETTINGFACT(apmStartMavlinkStreams)

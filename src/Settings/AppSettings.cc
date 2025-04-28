@@ -173,6 +173,13 @@ DECLARE_SETTINGSFACT(AppSettings, forwardMavlink)
 DECLARE_SETTINGSFACT(AppSettings, forwardMavlinkHostName)
 DECLARE_SETTINGSFACT(AppSettings, forwardMavlinkAPMSupportHostName)
 
+
+//目标点经纬高与航向角
+DECLARE_SETTINGSFACT(AppSettings, firePointLat)
+DECLARE_SETTINGSFACT(AppSettings, firePointLon)
+DECLARE_SETTINGSFACT(AppSettings, firePointAlt)
+DECLARE_SETTINGSFACT(AppSettings, windAzimuth)
+
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {
     if (!_indoorPaletteFact) {

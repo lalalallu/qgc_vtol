@@ -340,6 +340,32 @@
     "longDesc":  "Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx",
     "type":      "string",
     "default":   "support.ardupilot.org:xxxx"
+},
+{
+    "name":             "firePointLat",
+    "shortDesc": "Fire Point Lat Value",
+    "type":         "double",
+    "default":     0.0
+},
+{
+    "name":             "firePointLon",
+    "shortDesc": "Fire Point Lon Value",
+    "type":         "double",
+    "default":     0.0
+},
+{
+    "name":             "firePointAlt",
+    "shortDesc": "Fire Point Alt Value",
+    "type":         "double",
+    "default":     0.0
+},
+{
+    "name":        "windAzimuth",
+    "shortDesc":    "航向角",
+    "type":         "double",
+    "default":      0.0,
+    "min":          0.0,
+    "max":          359.9
 }
 ]
 }

@@ -205,6 +205,22 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
     uint8_t mavlinkChannel = link->mavlinkChannel();
 
+
+    if (_message.msgid == MAVLINK_MSG_ID_REQUEST_WIND_DIR)
+    {
+        // qCDebug(MAVLinkProtocolLog) << "+++++++++++++++++++++++++++++++++++++++++=" << _message.msgid;
+        qCWarning(MissionControllerLog) << "HANDLE_MAVLINK_MSG_ID_REQUEST_WIND_DIR:" << _message.msgid;
+        mavlink_request_wind_dir_t winddir;
+        mavlink_msg_request_wind_dir_decode(&_message, &winddir);
+        _app->toolbox()->settingsManager()->appSettings()->windAzimuth()->setRawValue(winddir.wind_dir);
+        _app->showAppMessage(tr("获取航向成功: %1度").arg(_app->toolbox()->settingsManager()->appSettings()->windAzimuth()->rawValue().toDouble()), tr("WIND_DIR获取航向"));
+    }
+    // if (_message.msgid == MAVLINK_MSG_ID_MY_TEST_MSG)
+    // {
+    //     // qCDebug(MAVLinkProtocolLog) << "+++++++++++++++++++++++++++++++++++++++++=" << _message.msgid;
+    //     qCWarning(MissionControllerLog) << "HANDLE_MAVLINK_MSG_ID_MY_TEST_MSG:" << _message.msgid;
+    // }
+
     for (int position = 0; position < b.size(); position++) {
         if (mavlink_parse_char(mavlinkChannel, static_cast<uint8_t>(b[position]), &_message, &_status)) {
             // Got a valid message

@@ -66,6 +66,10 @@ Item {
     property string _batteryChangePointText:    _batteryChangePoint < 0 ?       qsTr("N/A") : _batteryChangePoint
     property string _batteriesRequiredText:     _batteriesRequired < 0 ?        qsTr("N/A") : _batteriesRequired
 
+    property var    _targetPointLat:           0
+    property var    _targetPointLon:           0
+    property var    _targetPointAzimuth:           0
+
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
     function getMissionTime() {
@@ -102,7 +106,7 @@ Item {
 
     Timer {
         id:             resetProgressTimer
-        interval:       5000
+        interval:       2000
         onTriggered: {
             missionStats.visible = true
             uploadCompleteText.visible = false
@@ -217,7 +221,103 @@ Item {
                 Layout.minimumWidth:    _largeValueWidth
             }
         }
+        GridLayout {
+            columns:                5
+            rowSpacing:             _rowSpacing
+            columnSpacing:          _labelToValueSpacing
+            Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
+            visible:                true
 
+        // QGCTextField {
+        //     id:               latInput
+        //     visible:            false
+        //     // Layout.fillWidth: true
+        //     placeholderText:  qsTr("Enter lat here...")
+        //     inputMethodHints: Qt.ImhNoAutoUppercase
+        //     function sendCommand() {
+        //         _targetPointLat = text;
+        //         console.log("latInput"+_targetPointLat);
+        //         // console.log("latInput");
+        //     }
+        //     onAccepted: sendCommand()
+        // }
+        // QGCTextField {
+        //     id:               lonInput
+        //     visible:            false
+        //     // Layout.fillWidth: true
+        //     placeholderText:  qsTr("Enter lon here...")
+        //     inputMethodHints: Qt.ImhNoAutoUppercase
+        //     function sendCommand() {
+        //         _targetPointLon = text;
+        //         console.log("lonInput"+_targetPointLon);
+        //         // console.log("lonInput");
+        //     }
+        //     onAccepted: sendCommand()
+        // }
+        // QGCTextField {
+        //     id:               azimuthInput
+        //     visible:            false
+        //     // Layout.fillWidth: true
+        //     placeholderText:  qsTr("Enter Azimuth here...")
+        //     inputMethodHints: Qt.ImhNoAutoUppercase
+        //     function sendCommand() {
+        //         _targetPointAzimuth = text;
+        //         console.log("azimuthInput"+_targetPointAzimuth);
+        //         // console.log("istanceInput");
+        //     }
+        //     onAccepted: sendCommand()
+        // }
+        QGCButton{
+            id:          createpointButton1
+            text: qsTr("search waypoint");
+            visible:     true
+            onClicked:   {
+                // console.log("testbutton");
+                _planMasterController.missionController.searchFireWaypoint();
+                console.log("search waypoint");
+            }
+        }
+        QGCButton{
+            id:          createpointButton2
+            text: qsTr("insert waypoint");  
+            visible:     true
+            onClicked:   {
+                // console.log("testbutton");
+                _planMasterController.missionController.insertMyWaypoint();
+                console.log("insert waypoint");
+            }
+        }
+        QGCButton{
+            id:          createpointButton3
+            text: qsTr("send waypoint");
+            visible:     true
+            onClicked:   {
+                // console.log("testbutton");
+                _planMasterController.missionController.sendFireWaypoint();
+                console.log("send waypoint");
+            }
+        }
+        QGCButton{
+            id:          createpointButton4
+            text: qsTr("open airdrop");
+            visible:     true
+            onClicked:   {
+                // console.log("testbutton");
+                _planMasterController.missionController.openAairDrop(true);
+                console.log("open airdrop");
+            }
+        }
+        QGCButton{
+            id:          createpointButton5
+            text: qsTr("close airdrop");
+            visible:     true
+            onClicked:   {
+                // console.log("testbutton");
+                _planMasterController.missionController.openAairDrop(false);
+                console.log("close airdrop");
+            }
+        }
+        }
         GridLayout {
             columns:                3
             rowSpacing:             _rowSpacing
@@ -248,6 +348,7 @@ Item {
             visible:     !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
             primary:     _controllerDirty
             onClicked:   _planMasterController.upload()
+            Layout.leftMargin: 20     //与左边间隔
 
             PropertyAnimation on opacity {
                 easing.type:    Easing.OutQuart

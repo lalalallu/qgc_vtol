@@ -462,6 +462,12 @@ public:
     /// Trigger camera using MAV_CMD_DO_DIGICAM_CONTROL command
     Q_INVOKABLE void triggerSimpleCamera(void);
 
+    // 发送目标点经纬高
+    Q_INVOKABLE void sendFirePointMsg(void);
+
+    // 发送投弹任务标志
+    Q_INVOKABLE void sendFlagOfAirDrop(bool isAirDrop,bool isOn);
+
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_INVOKABLE void flashBootloader();
 #endif
@@ -1095,6 +1101,13 @@ private:
     void _handleGimbalOrientation       (const mavlink_message_t& message);
     void _handleObstacleDistance        (const mavlink_message_t& message);
     void _handleFenceStatus             (const mavlink_message_t& message);
+
+    // 接收航向
+    void _handleWindDir                 (const mavlink_message_t& message);
+
+    // 接收test
+    void _handleMyTestMsg               (const mavlink_message_t& message);
+
     void _handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::ParsedEvent> event);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)

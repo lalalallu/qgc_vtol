@@ -620,7 +620,11 @@ void Vehicle::resetCounters()
     _messageSeq         = 0;
     _heardFrom          = false;
 }
-
+// 接收test
+void Vehicle::_handleMyTestMsg(const mavlink_message_t& message)
+{
+    qWarning() << "handle MAVLINK_MSG_ID_MY_TEST_MSG.";
+}
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
     // If the link is already running at Mavlink V2 set our max proto version to it.
@@ -695,6 +699,15 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
 
     switch (message.msgid) {
+            //新增消息处理
+    // case MAVLINK_MSG_ID_REQUEST_WIND_DIR:
+    //     qWarning() << "MAVLINK_MSG_ID_REQUEST_WIND_DIR.";
+    //     _handleWindDir(message);
+    //     break;
+    // case MAVLINK_MSG_ID_MY_TEST_MSG:
+    //     qWarning() << "MAVLINK_MSG_ID_MY_TEST_MSG.";
+    //     _handleMyTestMsg(message);
+    //     break;
     case MAVLINK_MSG_ID_HOME_POSITION:
         _handleHomePosition(message);
         break;
@@ -982,6 +995,57 @@ void Vehicle::_chunkedStatusTextCompleted(uint8_t compId)
             qgcApp()->toolbox()->audioOutput()->say(messageText);
         }
     }
+    if (messageText.contains("GotFirePoint"))
+    {
+        qgcApp()->showAppMessage(messageText, tr("发送目标点成功"));
+    }
+    if (messageText.contains("winddir:"))
+    {
+        qWarning() << "+++++++++++++++++++" + messageText;
+        const QString key = "winddir:";
+        int keyPos = messageText.indexOf(key, 0, Qt::CaseInsensitive);
+
+        if (keyPos == -1)
+        {
+            qWarning() << "在消息中未找到关键字 '" << key << "':" << messageText;
+        }
+
+        int valueStartPos = keyPos + key.length();
+        QString valuePart = messageText.mid(valueStartPos);
+
+        // 清理首尾空格
+        QString trimmedValuePart = valuePart.trimmed();
+
+        // 按空格分割字符串，并跳过空部分
+        QStringList parts = trimmedValuePart.split(' ', Qt::SkipEmptyParts);
+
+        if (parts.isEmpty())
+        {
+            // 如果分割后为空（例如 "winddir: "）
+            qWarning() << "关键字后未找到有效部分，在消息中:" << messageText;
+        }
+
+        // 假设第一部分就是数字
+        QString numberStr = parts.first();
+
+        // 转换数字部分（仍然推荐使用 C locale）
+        QLocale cLocale(QLocale::C);
+        bool conversionOk = false;
+        float value = cLocale.toFloat(numberStr, &conversionOk);
+        //qWarning() << "_settingsManager->appSettings()->windAzimuth()->value" << value;
+        if (!conversionOk)
+        {
+            // 如果第一部分无法转换为数字
+            qWarning() << "无法将提取的数字部分转换为浮点数:" << numberStr << "在消息中:" << messageText;
+            // return std::numeric_limits<float>::quiet_NaN();
+        }
+
+        _settingsManager->appSettings()->windAzimuth()->setRawValue(value);
+        //弹窗显示航向（逆风向）
+        qgcApp()->showAppMessage(tr("获取航向成功: %1").arg(_settingsManager->appSettings()->windAzimuth()->rawValue().toDouble()), tr("StatusText获取航向"));
+        //qWarning() << "_settingsManager->appSettings()->windAzimuth()->" << _settingsManager->appSettings()->windAzimuth()->rawValue().toDouble();
+    }
+    // qWarning() << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAA" + messageText;
     emit textMessageReceived(id(), compId, severity, messageText.toHtmlEscaped(), "");
 }
 
@@ -4366,6 +4430,15 @@ void Vehicle::_handleFenceStatus(const mavlink_message_t& message)
     }
 }
 
+void Vehicle::_handleWindDir(const mavlink_message_t& message)
+{
+    mavlink_request_wind_dir_t windir;
+    mavlink_msg_request_wind_dir_decode(&message,&windir);
+
+    qWarning() << "_handleWindDir"<< windir.wind_dir;
+}
+
+
 void Vehicle::updateFlightDistance(double distance)
 {
     _flightDistanceFact.setRawValue(_flightDistanceFact.rawValue().toDouble() + distance);
@@ -4502,4 +4575,76 @@ void Vehicle::sendGripperAction(GRIPPER_OPTIONS gripperOption)
         default: 
         break;
     }
+}
+
+
+void Vehicle::sendFirePointMsg(void)
+{
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog)<< "sendJoystickDataThreadSafe: primary link gone!";
+        return;
+    }
+
+    if (sharedLink->linkConfiguration()->isHighLatency()) {
+        return;
+    }
+    double firePointLat = qgcApp()->toolbox()->settingsManager()->appSettings()->firePointLat()->rawValue().toDouble();
+    double firePointLon = qgcApp()->toolbox()->settingsManager()->appSettings()->firePointLon()->rawValue().toDouble();
+    double firePointAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->firePointAlt()->rawValue().toDouble();
+
+    qWarning() << "sendFirePointMsg"<<QString::number(firePointLat, 'f', 8)<<","<<QString::number(firePointLon, 'f', 8)<<","<<QString::number(firePointAlt, 'f', 8);
+
+    mavlink_message_t msg;
+    mavlink_msg_target_location_send_pack_chan(
+                qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                sharedLink->mavlinkChannel(),
+                &msg,
+                (int)(firePointLat*10000000),
+                (int)(firePointLon*10000000),
+                (int)(firePointAlt*1000)
+                );
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+}
+
+
+void Vehicle::sendFlagOfAirDrop(bool isAirDrop,bool isOn)
+{
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog)<< "sendJoystickDataThreadSafe: primary link gone!";
+        return;
+    }
+
+    if (sharedLink->linkConfiguration()->isHighLatency()) {
+        return;
+    }
+
+    float flag = -1;
+
+    //投弹航线标识
+    if (isAirDrop == true && isOn ==false)
+    {
+        flag = 250.052;
+    }
+    else if (isAirDrop == false && isOn ==false) 
+    {
+        flag = 0;
+    }
+    //开关投弹仓
+    if (isAirDrop == false && isOn ==true)
+    {
+        flag = 114.514;
+    }
+    
+    mavlink_message_t msg;
+    mavlink_msg_request_wind_dir_pack_chan(
+                qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                sharedLink->mavlinkChannel(),
+                &msg,
+                flag
+                );
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }

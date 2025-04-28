@@ -1433,6 +1433,7 @@ contains (CONFIG, QGC_DISABLE_INSTALLER_SETUP) {
 }
 
 DISTFILES += \
+    src/FlightMap/Images/myLocations.svg \
     src/QmlControls/QGroundControl/Specific/qmldir
 
 #

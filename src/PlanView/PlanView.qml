@@ -474,6 +474,18 @@ Item {
                 }
             }
 
+            // Add the TargetImage to the map
+            MapItemView {
+                model: QGroundControl.multiVehicleManager.vehicles
+                delegate: TargetImage {
+                    vehicle:        object
+                    coordinate:     QtPositioning.coordinate(QGroundControl.settingsManager.appSettings.firePointLat.rawValue, QGroundControl.settingsManager.appSettings.firePointLon.rawValue)
+                    map:            editorMap
+                    size:           ScreenTools.defaultFontPixelHeight * 3
+                    z:              QGroundControl.zOrderMapItems - 1
+                }
+            }
+
             GeoFenceMapVisuals {
                 map:                    editorMap
                 myGeoFenceController:   _geoFenceController

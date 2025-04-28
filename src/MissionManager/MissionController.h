@@ -170,6 +170,18 @@ public:
     /// Updates the altitudes of the items in the current mission to the new default altitude
     Q_INVOKABLE void applyDefaultMissionAltitude(void);
 
+    /// search fire waypoint
+    Q_INVOKABLE void searchFireWaypoint();
+
+    /// insert my waypoint
+    Q_INVOKABLE void insertMyWaypoint();
+
+    /// send fire waypoint
+    Q_INVOKABLE void sendFireWaypoint();
+
+    /// open airdrop
+    Q_INVOKABLE void openAairDrop(bool isOpen);
+
     /// Sets a new current mission item (PlanView).
     ///     @param sequenceNumber - index for new item, -1 to clear current item
     Q_INVOKABLE void setCurrentPlanViewSeqNum(int sequenceNumber, bool force);

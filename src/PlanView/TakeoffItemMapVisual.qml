@@ -87,6 +87,7 @@ Item {
                 } else {
                     _missionItem.launchCoordinate = itemCoordinate
                 }
+                // _missionItem.coordinate = itemCoordinate
             }
         }
     }
